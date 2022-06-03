@@ -18,3 +18,4 @@ python_version = "3.9"
 
 [scripts]
 run = "uvicorn main:app --reload"
+spanner-cli = "docker-compose exec spanner-cli spanner-cli -p local -i local -d stress-apps"
