@@ -13,8 +13,8 @@ class User(BaseModel):
     password: SecretStr = Field(min_length=8, max_length=16)
 
 
-@router.get("/", tags=["users"])
-def read_user():
+@router.get("/{user_id}", tags=["users"])
+def read_user(id: int):
     """
     Get user info
     """
