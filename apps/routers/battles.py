@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 router = APIRouter(
@@ -25,13 +27,13 @@ def battles(battles: Battles) -> bool:
     """
     # TODO: create battles and store it to Cloud Spanner
     print(battles)
-    return {True}
+    return JSONResponse(status_code=201, content=jsonable_encoder({"result": True}))
 
 
 @router.post("/history", tags=["battles"])
-def battle_history(battle_history: BattleHistory):
+def battle_history(battle_history: BattleHistory) -> JSONResponse:
     """
     Append battle history
     """
     # TODO: create battle history and store it to Cloud Spanner
-    return battle_history
+    return JSONResponse(status_code=201, content=jsonable_encoder(battle_history))

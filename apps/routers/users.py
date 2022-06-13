@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 router = APIRouter(
@@ -14,18 +16,18 @@ class User(BaseModel):
 
 
 @router.get("/{user_id}", tags=["users"])
-def read_user(id: int):
+def read_user(id: int) -> JSONResponse:
     """
     Get user info
     """
     # TODO: get user info from Cloud Spanner
-    return [{"username": "Rick"}, {"username": "Morty"}]
+    return JSONResponse(content=jsonable_encoder([{"username": "Rick"}, {"username": "Morty"}]))
 
 
 @router.post("/", tags=["users"])
-def create_user(user: User):
+def create_user(user: User) -> JSONResponse:
     """
     Create user
     """
     # TODO: create user and store it to Cloud Spanner
-    return user
+    return JSONResponse(status_code=201, content=jsonable_encoder(user))
