@@ -29,7 +29,7 @@ def read_character_master(character_id: int):
 
 
 @router.post("/", tags=["character_master"])
-def create_characters(character_master: CreateCharacterMaster):
+def create_character_master(character_master: CreateCharacterMaster):
     """
     Create character master
     """
@@ -38,7 +38,7 @@ def create_characters(character_master: CreateCharacterMaster):
 
 
 @router.put("/", tags=["character_master"])
-def update_characters(updates: UpdateCharacterMaster):
+def update_character_master(updates: UpdateCharacterMaster):
     """
     Update character master
     """
