@@ -31,7 +31,7 @@ def read_characters(character_id: int):
     return [{"username": "Rick"}, {"username": "Morty"}]
 
 
-@router.post("/", tags=["character_status"])
+@router.post("/", tags=["characters"])
 def create_characters(characters: CreateCharacters):
     """
     Create character status
