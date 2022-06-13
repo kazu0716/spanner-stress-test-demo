@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from pydantic import BaseModel, EmailStr, SecretStr, Field
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 router = APIRouter(
     prefix="/users",
     tags=["users"],
 )
+
 
 class User(BaseModel):
     name: str
@@ -19,6 +20,7 @@ def read_user():
     """
     # TODO: get user info from Cloud Spanner
     return [{"username": "Rick"}, {"username": "Morty"}]
+
 
 @router.post("/", tags=["users"])
 def create_user(user: User):
