@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+locust = "==2.9.0"
+faker = "==13.13.0"
+pydantic = "==1.9.1"
+email-validator = "==1.2.1"
+
+[dev-packages]
+ipdb = "*"
+autopep8 = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3.9"
+
+[scripts]
+locust = "locust --headless --users 10 --spawn-rate 1 -H http://localhost:8000"

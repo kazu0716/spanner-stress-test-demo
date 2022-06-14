@@ -16,7 +16,7 @@ class User(BaseModel):
 
 
 @router.get("/{user_id}", tags=["users"])
-def read_user(id: int) -> JSONResponse:
+def read_user(user_id: int) -> JSONResponse:
     """
     Get user info
     """
