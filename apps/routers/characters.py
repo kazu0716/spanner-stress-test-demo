@@ -48,19 +48,17 @@ def read_all_characters(db: Database = Depends(get_db)) -> JSONResponse:
     return JSONResponse(content=jsonable_encoder([CharacterResponse(**dict(zip(CharacterResponse.__fields__.keys(), result))).dict() for result in results]))
 
 
-@router.get("/{character_id}", tags=["characters"])
-def read_character(character_id: int, db: Database = Depends(get_db)) -> JSONResponse:
+@router.get("/{user_id}", tags=["characters"])
+def read_character(user_id: int, db: Database = Depends(get_db)) -> JSONResponse:
     """
-    Get a character
+    Get characters of a user
     """
     with db.snapshot() as snapshot:
         query = f"SELECT Id, Users.Name,CharacterMasters.Name, Kind, {TABLE}.Name, Level, Experience, Strength FROM {TABLE}\
                   INNER JOIN Users ON Characters.UserId=Users.UserId\
-                  INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId WHERE Id={character_id}"
+                  INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId WHERE {TABLE}.UserId={user_id}"
         results = list(snapshot.execute_sql(query))
-    if not results:
-        return JSONResponse(content=jsonable_encoder({}))
-    return JSONResponse(content=jsonable_encoder(CharacterResponse(**dict(zip(CharacterResponse.__fields__.keys(), results[0])))))
+    return JSONResponse(content=jsonable_encoder([CharacterResponse(**dict(zip(CharacterResponse.__fields__.keys(), result))).dict() for result in results]))
 
 
 @ router.post("/", tags=["characters"])
@@ -68,6 +66,11 @@ def create_characters(characters: Character, db: Database = Depends(get_db)) -> 
     """
     Create character status
     """
+    with db.snapshot() as snapshot:
+        cnt: int = list(snapshot.execute_sql(f"SELECT COUNT(*) FROM {TABLE} WHERE UserId={characters.user_id}"))[0][0]
+    # NOTE: avoid to get characters more over 100, because it become difficult to handle a lot of characters in this game
+    if cnt >= 100:
+        return JSONResponse(content=jsonable_encoder({}))
     with db.batch() as batch:
         batch.insert(table=TABLE, columns=("Id", "UserId", "CharacterId", "Name", "Level", "Experience", "Strength", "CreatedAt", "UpdatedAt"),
                      values=[(get_uuid(), characters.user_id, characters.character_id, characters.name, characters.level,
