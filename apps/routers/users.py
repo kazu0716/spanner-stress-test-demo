@@ -8,6 +8,7 @@ from pydantic import BaseModel, EmailStr, Field, SecretStr
 from .utils import get_db, get_password_hash, get_uuid
 
 TABLE: str = "Users"
+
 router = APIRouter(
     prefix="/users",
     tags=["users"],
@@ -27,7 +28,7 @@ class UserResponse(BaseModel):
 
 
 @router.get("/", tags=["users"])
-def read_all_user(db: Database = Depends(get_db)) -> JSONResponse:
+def read_all_users(db: Database = Depends(get_db)) -> JSONResponse:
     """
     Get all users
     """
@@ -40,7 +41,7 @@ def read_all_user(db: Database = Depends(get_db)) -> JSONResponse:
 @router.get("/{user_id}", tags=["users"])
 def read_user(user_id: str, db: Database = Depends(get_db)) -> JSONResponse:
     """
-    Get particular user
+    Get a user
     """
     with db.snapshot() as snapshot:
         query = f"SELECT UserId, Name, Mail From {TABLE} WHERE UserId={user_id}"
@@ -50,7 +51,7 @@ def read_user(user_id: str, db: Database = Depends(get_db)) -> JSONResponse:
     return JSONResponse(content=jsonable_encoder(UserResponse(user_id=results[0][0], name=results[0][1], mail=results[0][2])))
 
 
-@ router.post("/", tags=["users"])
+@router.post("/", tags=["users"])
 def create_user(user: User, db: Database = Depends(get_db)) -> JSONResponse:
     """
     Create user
@@ -63,3 +64,9 @@ def create_user(user: User, db: Database = Depends(get_db)) -> JSONResponse:
             values=[(get_uuid(), user.name, user.mail, hashed_password, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)],
         )
     return JSONResponse(status_code=201, content=jsonable_encoder(user))
+
+
+@router.delete("/", tags=["users"])
+def delete_all_users(db: Database = Depends(get_db)) -> JSONResponse:
+    db.execute_partitioned_dml(f"DELETE FROM {TABLE} WHERE UserId > 0")
+    return JSONResponse(content=jsonable_encoder({}))
