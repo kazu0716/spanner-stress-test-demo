@@ -1,7 +1,3 @@
-from typing import Union
-from unicodedata import name
-from unittest import result
-
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -9,7 +5,7 @@ from google.cloud import spanner
 from google.cloud.spanner_v1.database import Database
 from pydantic import BaseModel
 
-from .utils import get_db, get_password_hash, get_uuid
+from .utils import get_db, get_uuid
 
 TABLE: str = "CharacterMasters"
 
@@ -19,14 +15,9 @@ router = APIRouter(
 )
 
 
-class CreateCharacterMaster(BaseModel):
+class CharacterMaster(BaseModel):
     name: str
     kind: str
-
-
-class UpdateCharacterMaster(BaseModel):
-    name: Union[str, None]
-    kind: Union[str, None]
 
 
 class CharacterMasterRespose(BaseModel):
@@ -60,7 +51,7 @@ def read_all_character_masters(character_id: int, db: Database = Depends(get_db)
 
 
 @router.post("/", tags=["character_master"])
-def create_character_master(character_master: CreateCharacterMaster, db: Database = Depends(get_db)) -> JSONResponse:
+def create_character_master(character_master: CharacterMaster, db: Database = Depends(get_db)) -> JSONResponse:
     """
     Create a character master
     """
