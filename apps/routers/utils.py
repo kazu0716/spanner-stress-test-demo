@@ -25,4 +25,4 @@ def get_password_hash(password):
 
 
 def get_uuid():
-    return uuid4().int & (1 << 32) - 1
+    return uuid4().int & (1 << 63) - 1

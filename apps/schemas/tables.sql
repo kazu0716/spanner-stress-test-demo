@@ -35,6 +35,7 @@ CREATE TABLE Characters (
     Strength INT64 NOT NULL,
     CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
     UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
+    FOREIGN KEY (UserId) REFERENCES Users (UserId),
     FOREIGN KEY (CharacterId) REFERENCES CharacterMasters (CharacterId),
 ) PRIMARY KEY (UserId, Id),
 INTERLEAVE IN PARENT Users ON DELETE CASCADE;
