@@ -7,6 +7,9 @@ name = "pypi"
 fastapi = "==0.78.0"
 uvicorn = "==0.17.6"
 email-validator = "==1.2.1"
+google-cloud-spanner = "==3.14.1"
+passlib = "==1.7.4"
+bcrypt = "==3.2.2"
 
 [dev-packages]
 autopep8 = "*"
@@ -18,5 +21,5 @@ flake8 = "*"
 python_version = "3.9"
 
 [scripts]
-run = "uvicorn main:app --reload"
+server = "uvicorn main:app --reload --host=0.0.0.0"
 spanner-cli = "docker-compose exec spanner-cli spanner-cli -p local -i local -d stress-apps"

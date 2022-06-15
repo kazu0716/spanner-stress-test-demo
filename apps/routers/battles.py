@@ -21,7 +21,7 @@ class BattleHistory(BaseModel):
 
 
 @router.post("/", tags=["battles"])
-def battles(battles: Battles) -> bool:
+def battles(battles: Battles) -> JSONResponse:
     """
     Battles opponents logic
     """

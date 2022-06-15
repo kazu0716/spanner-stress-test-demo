@@ -1,7 +1,26 @@
+CREATE TABLE CharacterMaster (
+    CharacterId INT64 NOT NULL,
+    Name STRING(16) NOT NULL,
+    Kind STRING(16) NOT NULL,
+    CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
+    UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
+) PRIMARY KEY (CharacterId);
+
+CREATE TABLE OpponentMasters (
+    OpponentId INT64 NOT NULL,
+    Name STRING(32) NOT NULL,
+    Kind STRING(16) NOT NULL,
+    Strength INT64 NOT NULL,
+    Experience INT64 NOT NULL,
+    CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
+    UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
+) PRIMARY KEY (OpponentId);
+
 CREATE TABLE Users (
     UserId INT64 NOT NULL,
-    Mail STRING(64),
-    Password STRING(64),
+    Name STRING(32) NOT NULL,
+    Mail STRING(64) NOT NULL,
+    Password STRING(64) NOT NULL,
     CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
     UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
 ) PRIMARY KEY (UserId);
@@ -10,41 +29,23 @@ CREATE TABLE Characters (
     Id INT64 NOT NULL,
     UserId INT64 NOT NULL,
     CharacterId INT64 NOT NULL,
-    Name STRING(16),
-    Level INT64,
-    Experience INT64,
-    Strength INT64,
+    Name STRING(16) NOT NULL,
+    Level INT64 NOT NULL,
+    Experience INT64 NOT NULL,
+    Strength INT64 NOT NULL,
     CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
     UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
     FOREIGN KEY (CharacterId) REFERENCES CharacterMasters (CharacterId),
 ) PRIMARY KEY (UserId, Id),
 INTERLEAVE IN PARENT Users ON DELETE CASCADE;
 
-CREATE TABLE CharacterMasters (
-    CharacterId INT64,
-    Name STRING(16),
-    Kind STRING(16),
-    CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
-    UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
-) PRIMARY KEY (CharacterId);
-
-CREATE TABLE OpponentMasters (
-    OpponentId INT64 NOT NULL,
-    Name STRING(32),
-    Kind STRING(16),
-    Strength INT64,
-    Experience INT64,
-    CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
-    UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
-) PRIMARY KEY (OpponentId);
-
 CREATE TABLE BattleHistory (
     BattleHistoryId INT64 NOT NULL,
     UserId INT64 NOT NULL,
     Id INT64 NOT NULL,
     OpponentId INT64 NOT NULL,
-    Result BOOL,
-    EntryShardId INT64,
+    Result BOOL NOT NULL,
+    EntryShardId INT64 NOT NULL,
     CreatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
     UpdatedAt TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true),
     FOREIGN KEY (UserId) REFERENCES Users (UserId),
