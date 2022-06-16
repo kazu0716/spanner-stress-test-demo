@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from locust import FastHttpUser, task
 
-API_PATH = "api/v1"
+API_VERSION = "v1"
 CHARACTER_NUM = 10
 fake = Faker('jp-JP')
 
@@ -45,34 +45,34 @@ class StressScenario(FastHttpUser):
     def create_fake_user(self):
         self.headers["User-Agent"] = fake.chrome()
         fake_user: User = User(name=fake.name(), mail=fake.email(), password=fake.password(length=randint(8, 16)))
-        self.client.post(url=f"/{API_PATH}/users/", headers=self.headers, data=fake_user.json())
+        self.client.post(url=f"/api/{API_VERSION}/users/", headers=self.headers, data=fake_user.json())
         # TODO: Stored user id to redis
 
-    @task(1)
-    def create_character(self):
-        self.headers["User-Agent"] = fake.chrome()
-        # TODO: GET USER ID
-        fake_character: Character = Character(
-            user_id=randint(8, 16),
-            character_id=randint(1, CHARACTER_NUM),
-            name=fake.first_kana_name(),
-            level=1,
-            experience=0,
-            strength=0
-        )
-        self.client.post(url=f"/{API_PATH}/characters/", headers=self.headers, data=fake_character.json())
-        # TODO: Stored character id to redis
+    # @task(1)
+    # def create_character(self):
+    #     self.headers["User-Agent"] = fake.chrome()
+    #     # TODO: GET USER ID
+    #     fake_character: Character = Character(
+    #         user_id=randint(8, 16),
+    #         character_id=randint(1, CHARACTER_NUM),
+    #         name=fake.first_kana_name(),
+    #         level=1,
+    #         experience=0,
+    #         strength=0
+    #     )
+    #     self.client.post(url=f"/{API_PATH}/characters/", headers=self.headers, data=fake_character.json())
+    #     # TODO: Stored character id to redis
 
-    @task(1)
-    def battle_opponent(self):
-        self.headers["User-Agent"] = fake.chrome()
-        # TODO: get character id
-        _id = 100
-        if self.client.post(url=f"/{API_PATH}/battles")["result"]:
-            res = self.client.get(url=f"/{API_PATH}/characters/{_id}")
-            update_data = UpdateCharacters(id=_id, level=res["level"])
+    # @task(1)
+    # def battle_opponent(self):
+    #     self.headers["User-Agent"] = fake.chrome()
+    #     # TODO: get character id
+    #     _id = 100
+    #     if self.client.post(url=f"/{API_PATH}/battles")["result"]:
+    #         res = self.client.get(url=f"/{API_PATH}/characters/{_id}")
+    #         update_data = UpdateCharacters(id=_id, level=res["level"])
 
-    @task(1)
-    def get_histories(self):
-        # TODO: get character
-        pass
+    # @task(1)
+    # def get_histories(self):
+    #     # TODO: get character
+    #     pass
