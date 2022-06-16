@@ -32,8 +32,7 @@ def read_character_master(db: Database = Depends(get_db)) -> JSONResponse:
     Get all character masters
     """
     with db.snapshot() as snapshot:
-        keyset = spanner.KeySet(all_=True)
-        results = snapshot.read(table=TABLE, columns=("CharacterId", "Name", "Kind"), keyset=keyset)
+        results = snapshot.read(table=TABLE, columns=("CharacterId", "Name", "Kind"), keyset=spanner.KeySet(all_=True))
     return JSONResponse(content=jsonable_encoder([CharacterMasterRespose(character_master_id=result[0], name=result[1], kind=result[2]).dict() for result in results]))
 
 
@@ -43,8 +42,7 @@ def read_all_character_masters(character_id: int, db: Database = Depends(get_db)
     Get a character master
     """
     with db.snapshot() as snapshot:
-        query = f"SELECT CharacterId, Name, Kind From {TABLE} WHERE CharacterId={character_id}"
-        results = list(snapshot.execute_sql(query))
+        results = list(snapshot.execute_sql(f"SELECT CharacterId, Name, Kind From {TABLE} WHERE CharacterId={character_id}"))
     if not results:
         return JSONResponse(content=jsonable_encoder({}))
     return JSONResponse(content=jsonable_encoder(CharacterMasterRespose(character_master_id=results[0][0], name=results[0][1], kind=results[0][2])))
