@@ -12,7 +12,9 @@ from .utils import epoch_to_datetime, get_db, get_entry_shard_id, get_uuid
 
 OpponentMasters: str = "OpponentMasters"
 Characters: str = "Characters"
+# NOTE: force to use index in select
 BattleHistory: str = "BattleHistory"
+BattleHistoryByUserId: str = "@{FORCE_INDEX=BattleHistoryByUserId}"
 
 router = APIRouter(
     prefix="/battles",
@@ -87,7 +89,7 @@ def battle_history(user_id: int, since: int, until: int, db: Database = Depends(
     stale read from history table between since and until
     """
     with db.snapshot(exact_staleness=timedelta(seconds=15)) as snapshot:
-        query = f"""SELECT UserId, Id, OpponentId,  Result, CreatedAt, UpdatedAt FROM {BattleHistory}
+        query = f"""SELECT UserId, Id, OpponentId,  Result, CreatedAt, UpdatedAt FROM {BattleHistory+BattleHistoryByUserId}
                   WHERE UserId={user_id} AND UpdatedAt>=@Since  AND UpdatedAt<=@Until
                   ORDER BY UpdatedAt DESC LIMIT 300"""
         params = {"Since": epoch_to_datetime(since), "Until": epoch_to_datetime(until)}
@@ -101,3 +103,9 @@ def battle_history(user_id: int, since: int, until: int, db: Database = Depends(
         result["updated_at"] = result["updated_at"].isoformat()
         res.append(BattleHistoryResponse(**result).dict())
     return JSONResponse(content=jsonable_encoder(res))
+
+
+@router.delete("/history", tags=["battles"])
+def delete_all_battle_histories(db: Database = Depends(get_db)) -> JSONResponse:
+    db.execute_partitioned_dml(f"DELETE FROM {BattleHistory} WHERE BattleHistoryId > 0")
+    return JSONResponse(content=jsonable_encoder({}))

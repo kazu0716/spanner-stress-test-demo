@@ -41,9 +41,9 @@ def read_all_characters(db: Database = Depends(get_db)) -> JSONResponse:
     Get all characters
     """
     with db.snapshot() as snapshot:
-        query = f"SELECT Id, Users.Name,CharacterMasters.Name, Kind, {TABLE}.Name, Level, Experience, Strength FROM {TABLE}\
-                  INNER JOIN Users ON Characters.UserId=Users.UserId\
-                  INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId"
+        query = f"""SELECT Id, Users.Name,CharacterMasters.Name, Kind, {TABLE}.Name, Level, Experience, Strength FROM {TABLE}
+                  INNER JOIN Users ON Characters.UserId=Users.UserId
+                  INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId"""
         results = list(snapshot.execute_sql(query))
     return JSONResponse(content=jsonable_encoder([CharacterResponse(**dict(zip(CharacterResponse.__fields__.keys(), result))).dict() for result in results]))
 
@@ -54,9 +54,9 @@ def read_character(user_id: int, db: Database = Depends(get_db)) -> JSONResponse
     Get characters of a user
     """
     with db.snapshot() as snapshot:
-        query = f"SELECT Id, Users.Name,CharacterMasters.Name, Kind, {TABLE}.Name, Level, Experience, Strength FROM {TABLE}\
-                  INNER JOIN Users ON Characters.UserId=Users.UserId\
-                  INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId WHERE {TABLE}.UserId={user_id}"
+        query = f"""SELECT Id, Users.Name,CharacterMasters.Name, Kind, {TABLE}.Name, Level, Experience, Strength FROM {TABLE}
+                  INNER JOIN Users ON Characters.UserId=Users.UserId
+                  INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId WHERE {TABLE}.UserId={user_id}"""
         results = list(snapshot.execute_sql(query))
     return JSONResponse(content=jsonable_encoder([CharacterResponse(**dict(zip(CharacterResponse.__fields__.keys(), result))).dict() for result in results]))
 
