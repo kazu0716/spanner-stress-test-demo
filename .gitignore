@@ -131,3 +131,6 @@ dmypy.json
 # vscode settings
 /.code-workspace
 settings.json
+
+.env_local
+dev-key.json
