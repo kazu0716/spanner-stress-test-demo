@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from os import environ, getenv
 from time import time_ns
 from uuid import uuid4
@@ -34,3 +35,8 @@ def get_entry_shard_id(user_id: int) -> int:
     num_shards = 100
     now: int = time_ns() // 1000
     return (user_id + now + get_uuid()) % num_shards
+
+
+def epoch_to_datetime(epoch: int) -> str:
+    # TODO: consider how to handle timestamp
+    return datetime.fromtimestamp(epoch).isoformat() + "Z"

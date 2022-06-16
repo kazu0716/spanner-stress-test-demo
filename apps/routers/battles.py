@@ -1,3 +1,4 @@
+from datetime import timedelta
 from random import randint, random
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,7 +8,7 @@ from google.cloud import spanner
 from google.cloud.spanner_v1.database import Database
 from pydantic import BaseModel
 
-from .utils import get_db, get_entry_shard_id, get_uuid
+from .utils import epoch_to_datetime, get_db, get_entry_shard_id, get_uuid
 
 OpponentMasters: str = "OpponentMasters"
 Characters: str = "Characters"
@@ -78,10 +79,25 @@ def battles(battles: Battles, db: Database = Depends(get_db)) -> JSONResponse:
     return JSONResponse(content=jsonable_encoder({"result": result}))
 
 
-# @ router.get("/history", tags=["battles"])
-# def battle_history(user_id: int, since: int, until: int) -> JSONResponse:
-#     """
-#     Append battle history
-#     """
-#     # TODO: create battle history and store it to Cloud Spanner by stale read
-#     return JSONResponse(content=jsonable_encoder())
+@router.get("/history", tags=["battles"])
+def battle_history(user_id: int, since: int, until: int, db: Database = Depends(get_db)) -> JSONResponse:
+    """
+    Append battle history
+
+    stale read from history table between since and until
+    """
+    with db.snapshot(exact_staleness=timedelta(seconds=15)) as snapshot:
+        query = f"""SELECT UserId, Id, OpponentId,  Result, CreatedAt, UpdatedAt FROM {BattleHistory}
+                  WHERE UserId={user_id} AND UpdatedAt>=@Since  AND UpdatedAt<=@Until
+                  ORDER BY UpdatedAt DESC LIMIT 300"""
+        params = {"Since": epoch_to_datetime(since), "Until": epoch_to_datetime(until)}
+        params_type = {"Since": spanner.param_types.TIMESTAMP, "Until": spanner.param_types.TIMESTAMP}
+        histories = snapshot.execute_sql(query, params=params, param_types=params_type)
+    res = []
+    for history in histories:
+        result = dict(zip(BattleHistoryResponse.__fields__.keys(), history))
+        # NOTE: need datetime to string
+        result["created_at"] = result["created_at"].isoformat()
+        result["updated_at"] = result["updated_at"].isoformat()
+        res.append(BattleHistoryResponse(**result).dict())
+    return JSONResponse(content=jsonable_encoder(res))
