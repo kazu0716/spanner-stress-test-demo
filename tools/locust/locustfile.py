@@ -36,10 +36,6 @@ class StressScenario(HttpUser):
     def on_start(self):
         self.headers: Dict[str, str] = {"Content-Type": "application/json", "User-Agent": fake.chrome()}
 
-    # def on_stop(self):
-    #     # TODO: close redis connection
-    #     pass
-
     @task(1)
     def create_fake_user(self):
         fake_user: User = User(name=fake.name(), mail=fake.email(), password=fake.password(length=randint(8, 16)))
@@ -48,9 +44,9 @@ class StressScenario(HttpUser):
     @task(3)
     def create_character(self):
         users = list(self.client.get(url=f"/api/{API_VERSION}/users/", headers=self.headers).json())
-        user = users[randint(0, len(users)-1)]
+        user = users[randint(0, len(users) - 1)]
         characters = list(self.client.get(url=f"/api/{API_VERSION}/character_master/", headers=self.headers).json())
-        character = characters[randint(0, len(characters)-1)]
+        character = characters[randint(0, len(characters) - 1)]
         fake_character: Character = Character(
             user_id=user["user_id"],
             character_id=character["character_master_id"],
@@ -64,17 +60,17 @@ class StressScenario(HttpUser):
     @task(10)
     def battle_opponent(self):
         users = list(self.client.get(url=f"/api/{API_VERSION}/users/", headers=self.headers).json())
-        user = users[randint(0, len(users)-1)]
+        user = users[randint(0, len(users) - 1)]
         characters = list(self.client.get(url=f"/api/{API_VERSION}/characters/{user['user_id']}", headers=self.headers).json())
         if not characters:
             return
-        character = characters[randint(0, len(characters)-1)]
+        character = characters[randint(0, len(characters) - 1)]
         self.client.post(url=f"/api/{API_VERSION}/battles/", headers=self.headers, data={"character_id": character["id"]})
 
     @task(5)
     def get_histories(self):
         users = list(self.client.get(url=f"/api/{API_VERSION}/users/", headers=self.headers).json())
-        user = users[randint(0, len(users)-1)]
+        user = users[randint(0, len(users) - 1)]
         until = int(time())
         since = until - randint(600, 3600)
         self.client.get(url=f"/api/{API_VERSION}/battles/history?user_id={user['user_id']}&since={since}&until={until}", headers=self.headers)
