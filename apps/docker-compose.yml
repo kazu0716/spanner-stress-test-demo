@@ -1,14 +1,30 @@
 version: '3.8'
 services:
+  app:
+    build:
+      context: .
+    environment:
+      SPANNER_EMULATOR_HOST: spanner:9010
+      GOOGLE_CLOUD_PROJECT: stress-test-demo
+      INSTANCE_NAME: local
+      DATABASE_NAME: sample-game
+      ENV: docker
+      LOG_LEVEL: DEBUG
+      JSON_LOGS: 1
+      GUNICORN_WORKERS: 4
+    ports:
+      - "8000:8000"
+
   spanner:
     image: gcr.io/cloud-spanner-emulator/emulator:1.4.2
     ports:
       - "9010:9010"
       - "9020:9020"
+
   spanner-cli:
     image: sjdaws/spanner-cli:latest
     environment:
-      SPANNER_EMULATOR_HOST: "spanner:9010"
+      SPANNER_EMULATOR_HOST: spanner:9010
     command:
       [
         'sh',

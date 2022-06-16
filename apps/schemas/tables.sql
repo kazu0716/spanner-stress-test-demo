@@ -1,4 +1,4 @@
-CREATE TABLE CharacterMaster (
+CREATE TABLE CharacterMasters (
     CharacterId INT64 NOT NULL,
     Name STRING(16) NOT NULL,
     Kind STRING(16) NOT NULL,

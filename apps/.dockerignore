@@ -1,0 +1,10 @@
+__pycache__
+.dockerignore
+.env
+.mypy_cache
+.venv
+.vscode
+Makefile
+docker-compose.yml
+schemas
+Dockerfile
