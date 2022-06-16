@@ -65,8 +65,13 @@ def battles(battles: Battles, db: Database = Depends(get_db)) -> JSONResponse:
     result: bool = random() <= (character.strength + randint(1, character.strength * randint(1, 10)) / opponent.strength)
     with db.batch() as batch:
         if result:
-            # TODO: process then win
-            pass
+            batch.update(
+                table=Characters,
+                columns=("Id", "UserId" , "Level", "Experience", "Strength"),
+                # NOTE: simple logic to make a character strong
+                values=[(character.id, character.user_id, character.level + int(random() / 0.95), character.experience + opponent.experience,
+                         character.strength + randint(0, opponent.experience // 100))],
+            )
         entry_shard_id = get_entry_shard_id(character.user_id)
         batch.insert(table=BattleHistory, columns=("BattleHistoryId", "UserId", "Id", "OpponentId", "Result", "EntryShardId", "CreatedAt", "UpdatedAt"),
                      values=[(get_uuid(), character.user_id, character.id, opponent.opponent_id, result, entry_shard_id, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)])
