@@ -34,7 +34,7 @@ def read_all_users(db: Database = Depends(get_db)) -> JSONResponse:
     """
     with db.snapshot() as snapshot:
         keyset = spanner.KeySet(all_=True)
-        results = snapshot.read(table=TABLE, columns=("UserId", "Name", "Mail"), keyset=keyset)
+        results = snapshot.read(table=TABLE, columns=("UserId", "Name", "Mail"), keyset=keyset, limit=10000)
     return JSONResponse(content=jsonable_encoder([UserResponse(user_id=result[0], name=result[1], mail=result[2]).dict() for result in results]))
 
 
