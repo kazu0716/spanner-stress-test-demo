@@ -1,32 +1,14 @@
 import logging
 import os
 import sys
-from sys import stdout
 
-from fastapi import FastAPI
 from gunicorn.app.base import BaseApplication
 from gunicorn.glogging import Logger
 from loguru import logger
 
-from routers.battles import router as battle_router
-from routers.character_master import router as character_master_router
-from routers.characters import router as characters_router
-from routers.opponent_master import router as opponent_master_router
-from routers.users import router as user_router
-
-# NOTE: gunicorn settings
 LOG_LEVEL = logging.getLevelName(os.environ.get("LOG_LEVEL", "DEBUG"))
 JSON_LOGS = True if os.environ.get("JSON_LOGS", "0") == "1" else False
 WORKERS = int(os.environ.get("GUNICORN_WORKERS", "4"))
-
-app = FastAPI()
-# NOTE: API version 1
-prefix_v1 = "/api/v1"
-app.include_router(user_router, prefix=prefix_v1)
-app.include_router(characters_router, prefix=prefix_v1)
-app.include_router(character_master_router, prefix=prefix_v1)
-app.include_router(opponent_master_router, prefix=prefix_v1)
-app.include_router(battle_router, prefix=prefix_v1)
 
 
 class InterceptHandler(logging.Handler):
@@ -75,39 +57,3 @@ class StandaloneApplication(BaseApplication):
 
     def load(self):
         return self.application
-
-
-if __name__ == '__main__':
-    # NOTE: gunicorn and uvicorn settings
-    # ref: https://pawamoy.github.io/posts/unify-logging-for-a-gunicorn-uvicorn-app/
-    intercept_handler = InterceptHandler()
-    logging.basicConfig(handlers=[intercept_handler], level=LOG_LEVEL)
-    logging.root.handlers = [intercept_handler]
-    logging.root.setLevel(LOG_LEVEL)
-
-    seen = set()
-    for name in [
-        *logging.root.manager.loggerDict.keys(),
-        "gunicorn",
-        "gunicorn.access",
-        "gunicorn.error",
-        "uvicorn",
-        "uvicorn.access",
-        "uvicorn.error",
-    ]:
-        if name not in seen:
-            seen.add(name.split(".")[0])
-            logging.getLogger(name).handlers = [intercept_handler]
-
-    logger.configure(handlers=[{"sink": stdout, "serialize": JSON_LOGS}])
-
-    options = {
-        "bind": "0.0.0.0",
-        "workers": WORKERS,
-        "accesslog": "-",
-        "errorlog": "-",
-        "worker_class": "uvicorn.workers.UvicornWorker",
-        "logger_class": StubbedGunicornLogger
-    }
-
-    StandaloneApplication(app, options).run()
