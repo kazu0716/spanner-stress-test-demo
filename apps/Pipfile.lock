@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "2e5a1a716a0ebde2962013000eba196ccca6d5aed32e2b62694f07a1eba64677"
+            "sha256": "1152735c161cff1327fae077ba39102ff157128f34d4d52218ac4244146866ad"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -141,7 +141,7 @@
                 "sha256:0f7569a4a6ff151958b64304071d370daa3243d15941a7beedf0c9fe5105603e",
                 "sha256:a851e51367fb93e9e1361732c1d60dab63eff98712e503ea7d92e6eccb109b4f"
             ],
-            "markers": "python_version >= '3.6' and python_version < '4'",
+            "markers": "python_version >= '3.6' and python_version < '4.0'",
             "version": "==2.2.1"
         },
         "email-validator": {
@@ -179,6 +179,22 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'",
             "version": "==2.8.0"
         },
+        "google-cloud-appengine-logging": {
+            "hashes": [
+                "sha256:ba77615c100f07edda91656ede1b7465907012b8663aad7c4e75ef9687994237",
+                "sha256:fe930e9dc5d77e8cb9940f8386965dd8f72d4d4ae2fc782e15637acb5ab585d5"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==1.1.2"
+        },
+        "google-cloud-audit-log": {
+            "hashes": [
+                "sha256:6d89903848aee9817477ece306544851b903a5ec561da966bbba5a8d12509a4d",
+                "sha256:80aa3816e85756ec9ba84f09fb4aae4a09ad9fd6637b8392ece42ad88f6e7efe"
+            ],
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "version": "==0.2.2"
+        },
         "google-cloud-core": {
             "hashes": [
                 "sha256:113ba4f492467d5bd442c8d724c1a25ad7384045c3178369038840ecdd19346c",
@@ -186,6 +202,14 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==2.3.1"
+        },
+        "google-cloud-logging": {
+            "hashes": [
+                "sha256:3ed00a8bd2076fee7a1dc053880fcb3c973184807e240f8c3c0929dd748eaf7f",
+                "sha256:702b69b01c4b98c50a4e4e7cbe12309de8c6685e99ec100c0c902e1765a45e92"
+            ],
+            "index": "pypi",
+            "version": "==3.1.2"
         },
         "google-cloud-spanner": {
             "hashes": [
@@ -463,7 +487,7 @@
                 "sha256:bc7861137fbce630f17b03d3ad02ad0bf978c844f3536d0edda6499dafce2b6f",
                 "sha256:d568723a7ebd25875d8d1eaf5dfa068cd2fc8194b2e483d7b1f7c81918dbec6b"
             ],
-            "markers": "python_version >= '3.7' and python_version < '4'",
+            "markers": "python_version >= '3.7' and python_version < '4.0'",
             "version": "==2.28.0"
         },
         "rsa": {
@@ -519,7 +543,7 @@
                 "sha256:44ece4d53fb1706f667c9bd1c648f5469a2ec925fcf3a776667042d645472c14",
                 "sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4.0'",
             "version": "==1.26.9"
         },
         "uvicorn": {
@@ -784,11 +808,11 @@
         },
         "traitlets": {
             "hashes": [
-                "sha256:1530d04badddc6a73d50b7ee34667d4b96914da352109117b4280cb56523a51b",
-                "sha256:74803a1baa59af70f023671d86d5c7a834c931186df26d50d362ee6a1ff021fd"
+                "sha256:0bb9f1f9f017aa8ec187d8b1b2a7a6626a2a1d877116baba52a129bfa124f8e2",
+                "sha256:65fa18961659635933100db8ca120ef6220555286949774b9cfc106f941d1c7a"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==5.2.2.post1"
+            "version": "==5.3.0"
         },
         "typing-extensions": {
             "hashes": [

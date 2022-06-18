@@ -1,5 +1,6 @@
 import logging
 import os
+from os import getenv
 from sys import stdout
 
 from fastapi import FastAPI
@@ -13,7 +14,8 @@ from routers.characters import router as characters_router
 from routers.opponent_master import router as opponent_master_router
 from routers.users import router as user_router
 
-# NOTE: gunicorn settings
+# NOTE: settings from env values
+ENV = getenv("ENV", "local")
 LOG_LEVEL = logging.getLevelName(os.environ.get("LOG_LEVEL", "DEBUG"))
 JSON_LOGS = True if os.environ.get("JSON_LOGS", "0") == "1" else False
 WORKERS = int(os.environ.get("GUNICORN_WORKERS", "4"))
