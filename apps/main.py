@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from sys import stdout
 
 from fastapi import FastAPI

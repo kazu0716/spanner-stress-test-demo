@@ -9,15 +9,20 @@ from passlib.context import CryptContext
 
 context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# NOTE: Spanner Settings
+PROJECT: str = getenv("GOOGLE_CLOUD_PROJECT", "stress-test-demo")
+INSTANCE: str = getenv("INSTANCE_NAME", "local")
+DATABASE: str = getenv("DATABASE_NAME", "sample-game")
+
 
 def get_db() -> Database:
     try:
         # NOTE: set host path to spanner own emulator in local env
         if getenv("ENV", "local") == "local":
             environ["SPANNER_EMULATOR_HOST"] = "localhost:9010"
-        spanner_client = spanner.Client(project=getenv("GOOGLE_CLOUD_PROJECT", "stress-test-demo"))
-        instance = spanner_client.instance(getenv("INSTANCE_NAME", "local"))
-        database = instance.database(getenv("DATABASE_NAME", "sample-game"))
+        spanner_client = spanner.Client(project=PROJECT)
+        instance = spanner_client.instance(INSTANCE)
+        database = instance.database(DATABASE)
         yield database
     finally:
         spanner_client.close()
