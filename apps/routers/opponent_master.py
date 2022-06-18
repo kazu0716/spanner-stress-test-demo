@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from google.cloud import spanner
@@ -31,14 +31,16 @@ class OpponentMasterResponse(BaseModel):
 
 
 @router.get("/", tags=["opponent_master"])
-def read_all_opponent_masters(db: Database = Depends(get_db)) -> JSONResponse:
+def read_random_opponent_master(db: Database = Depends(get_db)) -> JSONResponse:
     """
-    Get all opponent masters
+    Get a random opponent masters for test
     """
     with db.snapshot() as snapshot:
-        keyset = spanner.KeySet(all_=True)
-        results = snapshot.read(table=TABLE, columns=("OpponentId", "Name", "Kind", "Strength", "Experience"), keyset=keyset)
-    return JSONResponse(content=jsonable_encoder([OpponentMasterResponse(opponent_id=result[0], name=result[1], kind=result[2], strength=result[3], experience=result[4]).dict() for result in results]))
+        query = f"SELECT OpponentId, Name, Kind, Strength, Experience FROM {TABLE} TABLESAMPLE RESERVOIR (1 ROWS)"
+        results = list(snapshot.execute_sql(query))
+    if not results:
+        raise HTTPException(status_code=503, detail="Any opponent masters does not found")
+    return JSONResponse(content=jsonable_encoder(OpponentMasterResponse(opponent_id=results[0][0], name=results[0][1], kind=results[0][2], strength=results[0][3], experience=results[0][4])))
 
 
 @router.get("/{opponent_id}", tags=["opponent_master"])
@@ -50,7 +52,7 @@ def read_opponent_master(opponent_id: int, db: Database = Depends(get_db)) -> JS
         query = f"SELECT OpponentId, Name, Kind, Strength, Experience From {TABLE} WHERE OpponentId={opponent_id}"
         results = list(snapshot.execute_sql(query))
     if not results:
-        return JSONResponse(content=jsonable_encoder({}))
+        raise HTTPException(status_code=404, detail="The opponent did not found")
     return JSONResponse(content=jsonable_encoder(OpponentMasterResponse(opponent_id=results[0][0], name=results[0][1], kind=results[0][2], strength=results[0][3], experience=results[0][4])))
 
 

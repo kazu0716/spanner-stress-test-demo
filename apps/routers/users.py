@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from google.cloud import spanner
@@ -28,14 +28,16 @@ class UserResponse(BaseModel):
 
 
 @router.get("/", tags=["users"])
-def read_all_users(db: Database = Depends(get_db)) -> JSONResponse:
+def read_random_user(db: Database = Depends(get_db)) -> JSONResponse:
     """
-    Get all users
+    Get a random user for tests
     """
     with db.snapshot() as snapshot:
-        keyset = spanner.KeySet(all_=True)
-        results = snapshot.read(table=TABLE, columns=("UserId", "Name", "Mail"), keyset=keyset, limit=10000)
-    return JSONResponse(content=jsonable_encoder([UserResponse(user_id=result[0], name=result[1], mail=result[2]).dict() for result in results]))
+        query = f"SELECT UserId, Name, Mail From {TABLE} TABLESAMPLE RESERVOIR (1 ROWS)"
+        results = list(snapshot.execute_sql(query))
+    if not results:
+        raise HTTPException(status_code=503, detail="Any users does not found")
+    return JSONResponse(content=jsonable_encoder(UserResponse(user_id=results[0][0], name=results[0][1], mail=results[0][2])))
 
 
 @router.get("/{user_id}", tags=["users"])
@@ -47,7 +49,7 @@ def read_user(user_id: str, db: Database = Depends(get_db)) -> JSONResponse:
         query = f"SELECT UserId, Name, Mail From {TABLE} WHERE UserId={user_id}"
         results = list(snapshot.execute_sql(query))
     if not results:
-        return JSONResponse(content=jsonable_encoder({}))
+        raise HTTPException(status_code=404, detail="The character did not found")
     return JSONResponse(content=jsonable_encoder(UserResponse(user_id=results[0][0], name=results[0][1], mail=results[0][2])))
 
 
