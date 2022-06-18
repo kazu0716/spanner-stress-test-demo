@@ -5,18 +5,23 @@ from time import time
 from typing import Dict
 
 from faker import Faker
+from google.cloud.logging import Client
 from pydantic import BaseModel, EmailStr, Field
 
 from locust import HttpUser, task
 
 ENV = getenv("ENV", "local")
-LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
+LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
 
 # NOTE: logging settings
-# TODO: adjust following for cloud logging format
-Log_Format = "%(thread)d %(levelname)s %(asctime)s - %(message)s"
-logging.basicConfig(format=Log_Format, level=logging.getLevelName(LOG_LEVEL))
+if ENV == "production":
+    client = Client()
+    client.setup_logging()
+else:
+    logging.basicConfig(format="%(asctime)s %(thread)d %(funcName)s %(levelname)s %(message)s", level=logging.getLevelName(LOG_LEVEL))
 logger = logging.getLogger()
+logger.setLevel(logging.getLevelName(LOG_LEVEL))
+
 fake = Faker('jp-JP')
 
 
@@ -50,7 +55,7 @@ class StressScenario(HttpUser):
         self.version = "v1"
         self.headers: Dict[str, str] = {"Content-Type": "application/json", "User-Agent": fake.chrome()}
 
-    @task(1)
+    @ task(1)
     def create_fake_user(self):
         """create game user"""
         logger.debug("start create_fake_user")
@@ -59,7 +64,7 @@ class StressScenario(HttpUser):
         logger.debug(f"user: {res}")
         logger.debug("end create_fake_user")
 
-    @task(3)
+    @ task(3)
     def create_character(self):
         """a random user to get a random character"""
         logger.debug("start create_character")

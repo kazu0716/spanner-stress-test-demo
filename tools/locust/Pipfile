@@ -8,6 +8,7 @@ locust = "==2.9.0"
 faker = "==13.13.0"
 pydantic = "==1.9.1"
 email-validator = "==1.2.1"
+google-cloud-logging = "==3.1.2"
 
 [dev-packages]
 ipdb = "*"
