@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: locust-master
+  name: locust-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust-master
+  template:
+    metadata:
+      labels:
+        app: locust-master
+    spec:
+      containers:
+        - env:
+          image: locust_master
+          command: ["/usr/local/bin/locust"]
+          args: ["-f", "/user/src/app/locustfile.py", "--master", "--web-auth", "admin:testtest"]
+          imagePullPolicy: IfNotPresent
+          name: locust-master
+          ports:
+            - containerPort: 8089
+              name: master-web
+              protocol: TCP
+            - containerPort: 5557
+              name: master-p1
+              protocol: TCP
+            - containerPort: 5558
+              name: master-p2
+              protocol: TCP

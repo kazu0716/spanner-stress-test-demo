@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: locust-worker
+  name: locust-worker
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: locust-worker
+  template:
+    metadata:
+      labels:
+        app: locust-worker
+    spec:
+      containers:
+      - env:
+        image: locust_worker
+        command: ["/usr/local/bin/locust"]
+        args: ["-f", "/user/src/app/locustfile.py", "--worker", "--master-host", "locust-master"]
+        imagePullPolicy: IfNotPresent
+        name: locust-worker
