@@ -11,3 +11,6 @@ services:
     build:
       context: .
     command: /usr/local/bin/locust -f /user/src/app/locustfile.py --worker --master-host master
+    environment:
+      - ${ENV}
+      - ${LOG_LEVEL}

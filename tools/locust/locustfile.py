@@ -1,4 +1,5 @@
 import logging
+from os import getenv
 from random import randint
 from time import time
 from typing import Dict
@@ -8,10 +9,13 @@ from pydantic import BaseModel, EmailStr, Field
 
 from locust import HttpUser, task
 
+ENV = getenv("ENV", "local")
+LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
+
 # NOTE: logging settings
 # TODO: adjust following for cloud logging format
 Log_Format = "%(thread)d %(levelname)s %(asctime)s - %(message)s"
-logging.basicConfig(format=Log_Format, level=logging.DEBUG)
+logging.basicConfig(format=Log_Format, level=logging.getLevelName(LOG_LEVEL))
 logger = logging.getLogger()
 fake = Faker('jp-JP')
 
@@ -49,20 +53,20 @@ class StressScenario(HttpUser):
     @task(1)
     def create_fake_user(self):
         """create game user"""
-        logger.info("start create_fake_user")
+        logger.debug("start create_fake_user")
         fake_user: User = User(name=fake.name(), mail=fake.email(), password=fake.password(length=randint(8, 16)))
         res = self.client.post(url=f"/api/{self.version}/users/", headers=self.headers, data=fake_user.json()).json()
-        logger.info(f"user: {res}")
-        logger.info("end create_fake_user")
+        logger.debug(f"user: {res}")
+        logger.debug("end create_fake_user")
 
     @task(3)
     def create_character(self):
         """a random user to get a random character"""
-        logger.info("start create_character")
+        logger.debug("start create_character")
         user = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
-        logger.info(f"user: {user}")
+        logger.debug(f"user: {user}")
         character = self.client.get(url=f"/api/{self.version}/character_master/", headers=self.headers).json()
-        logger.info(f"character master: {character}")
+        logger.debug(f"character master: {character}")
         fake_character: Character = Character(
             user_id=user["user_id"],
             character_id=character["character_master_id"],
@@ -72,18 +76,18 @@ class StressScenario(HttpUser):
             strength=randint(1, pow(10, 5))
         )
         res = self.client.post(url=f"/api/{self.version}/characters/", headers=self.headers, data=fake_character.json()).json()
-        logger.info(f"result: {res}")
-        logger.info("end create_character")
+        logger.debug(f"result: {res}")
+        logger.debug("end create_character")
 
     @task(10)
     def battle_opponent(self):
         """a random user to battle a random opponent"""
-        logger.info("start battle_opponent")
+        logger.debug("start battle_opponent")
         user = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
-        logger.info(f"user: {user}")
+        logger.debug(f"user: {user}")
         characters = list(self.client.get(url=f"/api/{self.version}/characters/{user['user_id']}", headers=self.headers).json())
         if "detail" in characters:
-            logger.info("re-get character for battle")
+            logger.debug("re-get character for battle")
             character = self.client.get(url=f"/api/{self.version}/character_master/", headers=self.headers).json()
             fake_character: Character = Character(
                 user_id=user["user_id"],
@@ -95,23 +99,23 @@ class StressScenario(HttpUser):
             )
             self.client.post(url=f"/api/{self.version}/characters/", headers=self.headers, data=fake_character.json()).json()
             characters = list(self.client.get(url=f"/api/{self.version}/characters/{user['user_id']}", headers=self.headers).json())
-        logger.info(f"characters length: {len(characters)}")
+        logger.debug(f"characters length: {len(characters)}")
         character = characters[randint(0, len(characters) - 1)]
-        logger.info(f"character: {character}")
+        logger.debug(f"character: {character}")
         battle = Battles(character_id=character["id"])
         res = self.client.post(url=f"/api/{self.version}/battles/", headers=self.headers, data=battle.json()).json()
-        logger.info(f"result: {res}")
-        logger.info("end battle_opponent")
+        logger.debug(f"result: {res}")
+        logger.debug("end battle_opponent")
 
     @task(5)
     def get_histories(self):
         """get a battle history between random range"""
-        logger.info("start get_histories")
+        logger.debug("start get_histories")
         user = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
         until = int(time())
         since = until - randint(600, 3600)
-        logger.info(f"user: {user['user_id']}, since: {since}, until: {until}")
+        logger.debug(f"user: {user['user_id']}, since: {since}, until: {until}")
         res = self.client.get(
             url=f"/api/{self.version}/battles/history?user_id={user['user_id']}&since={since}&until={until}", headers=self.headers).json()
-        logger.info(f"result: {res}")
-        logger.info("end get_histories")
+        logger.debug(f"result: {res}")
+        logger.debug("end get_histories")
