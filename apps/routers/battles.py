@@ -56,13 +56,15 @@ def battles(battles: Battles, db: Database = Depends(get_db)) -> JSONResponse:
     Battles against opponents
     """
     with db.snapshot(multi_use=True) as snapshot:
-        query = f"SELECT Id, UserId, Level, Experience, Strength FROM {Characters} WHERE Id={battles.character_id}"
-        characters = list(snapshot.execute_sql(query))
-        key_set = spanner.KeySet(all_=True)
-        opponents = list(snapshot.read(table=OpponentMasters, columns=("OpponentId", "Kind", "Strength", "Experience"), keyset=key_set))
-    opponent = Opponent(**dict(zip(Opponent.__fields__.keys(), opponents[randint(0, len(opponents) - 1)])))
+        characters_query = f"SELECT Id, UserId, Level, Experience, Strength FROM {Characters} WHERE Id={battles.character_id}"
+        characters = list(snapshot.execute_sql(characters_query))
+        opponents_query = f"SELECT OpponentId, Kind, Strength, Experience FROM {OpponentMasters} TABLESAMPLE RESERVOIR (1 ROWS)"
+        opponents = list(snapshot.execute_sql(opponents_query))
+    if not opponents:
+        raise HTTPException(status_code=503, detail="Any opponent masters does not found")
     if not characters:
         raise HTTPException(status_code=404, detail="The character did not found")
+    opponent = Opponent(**dict(zip(Opponent.__fields__.keys(), opponents[0])))
     character = Character(**dict(zip(Character.__fields__.keys(), characters[0])))
     # NOTE: battle simple logic
     result: bool = random() <= (character.strength + randint(1, character.strength * randint(1, 10)) / opponent.strength)
