@@ -18,7 +18,7 @@ spec:
         - env:
           image: locust_master
           command: ["/usr/local/bin/locust"]
-          args: ["-f", "/user/src/app/locustfile.py", "--master", "--web-auth", "admin:testtest"]
+          args: ["-f", "/user/src/app/locustfile.py", "--master"]
           imagePullPolicy: IfNotPresent
           name: locust-master
           ports:

@@ -16,18 +16,18 @@ spec:
     spec:
       containers:
         - env:
-          image: locust_master
+          image: gcr.io/kazu0716-sandbox/locust:aee1c27
           command: ["/usr/local/bin/locust"]
-          args: ["-f", "/user/src/app/locustfile.py", "--master", "--web-auth", "admin:testtest"]
+          args: ["-f", "/user/src/app/locustfile.py", "--master"]
           imagePullPolicy: IfNotPresent
           name: locust-master
           ports:
-            - containerPort: 8089
-              name: master-web
+            - name: loc-master-web
+              containerPort: 8089
               protocol: TCP
-            - containerPort: 5557
-              name: master-p1
+            - name: loc-master-p1
+              containerPort: 5557
               protocol: TCP
-            - containerPort: 5558
-              name: master-p2
+            - name: loc-master-p2
+              containerPort: 5558
               protocol: TCP
