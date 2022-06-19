@@ -1,4 +1,4 @@
-# projects/kazu0716-sandbox/instances/spanner-demo/databases/sample-game
+# spanner-demo sample-game
 
 ## Tables
 
