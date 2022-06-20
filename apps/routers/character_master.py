@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -31,11 +33,12 @@ def read_random_character_master(db: Database = Depends(get_db)) -> JSONResponse
     """
     Get a random character masters for test
     """
-    with db.snapshot() as snapshot:
+    with db.snapshot(exact_staleness=timedelta(seconds=15)) as snapshot:
         query = f"SELECT CharacterId, Name, Kind From {TABLE} TABLESAMPLE RESERVOIR (1 ROWS)"
         results = list(snapshot.execute_sql(query))
     if not results:
-        raise HTTPException(status_code=503, detail="Any character masters does not found")
+        raise HTTPException(
+            status_code=503, detail="Any character masters does not found")
     return JSONResponse(content=jsonable_encoder(CharacterMasterRespose(character_master_id=results[0][0], name=results[0][1], kind=results[0][2])))
 
 
@@ -45,7 +48,7 @@ def read_character_master(character_id: int, db: Database = Depends(get_db)) -> 
     Get a character master
     """
     with db.snapshot() as snapshot:
-        results = list(snapshot.execute_sql(f"SELECT CharacterId, Name, Kind From {TABLE} WHERE CharacterId={character_id}"))
+        results = list(snapshot.execute_sql(f"SELECT CharacterId, Name, Kind From {TABLE} WHERE CharacterId={character_id}", request_options={"request_tag": "app=sample-game,action=select,service=read_character_master,target=character_master"}))
     if not results:
         return JSONResponse(content=jsonable_encoder({}))
     return JSONResponse(content=jsonable_encoder(CharacterMasterRespose(character_master_id=results[0][0], name=results[0][1], kind=results[0][2])))
@@ -60,7 +63,8 @@ def create_character_master(character_master: CharacterMaster, db: Database = De
         batch.insert(
             table=TABLE,
             columns=("CharacterId", "Name", "Kind", "CreatedAt", "UpdatedAt"),
-            values=[(get_uuid(), character_master.name, character_master.kind, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)],
+            values=[(get_uuid(), character_master.name, character_master.kind,
+                     spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)]
         )
     return JSONResponse(status_code=201, content=jsonable_encoder(character_master))
 

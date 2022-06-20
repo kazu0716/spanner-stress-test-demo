@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -35,11 +37,12 @@ def read_random_opponent_master(db: Database = Depends(get_db)) -> JSONResponse:
     """
     Get a random opponent masters for test
     """
-    with db.snapshot() as snapshot:
+    with db.snapshot(exact_staleness=timedelta(seconds=15)) as snapshot:
         query = f"SELECT OpponentId, Name, Kind, Strength, Experience FROM {TABLE} TABLESAMPLE RESERVOIR (1 ROWS)"
         results = list(snapshot.execute_sql(query))
     if not results:
-        raise HTTPException(status_code=503, detail="Any opponent masters does not found")
+        raise HTTPException(
+            status_code=503, detail="Any opponent masters does not found")
     return JSONResponse(content=jsonable_encoder(OpponentMasterResponse(opponent_id=results[0][0], name=results[0][1], kind=results[0][2], strength=results[0][3], experience=results[0][4])))
 
 
@@ -50,9 +53,10 @@ def read_opponent_master(opponent_id: int, db: Database = Depends(get_db)) -> JS
     """
     with db.snapshot() as snapshot:
         query = f"SELECT OpponentId, Name, Kind, Strength, Experience From {TABLE} WHERE OpponentId={opponent_id}"
-        results = list(snapshot.execute_sql(query))
+        results = list(snapshot.execute_sql(query, request_options={"request_tag": "app=sample-game,action=select,service=read_opponent_master,target=opponent_masters"}))
     if not results:
-        raise HTTPException(status_code=404, detail="The opponent did not found")
+        raise HTTPException(
+            status_code=404, detail="The opponent did not found")
     return JSONResponse(content=jsonable_encoder(OpponentMasterResponse(opponent_id=results[0][0], name=results[0][1], kind=results[0][2], strength=results[0][3], experience=results[0][4])))
 
 
@@ -64,7 +68,8 @@ def create_opponent_master(opponent_master: OpponentMaster, db: Database = Depen
     with db.batch() as batch:
         batch.insert(
             table=TABLE,
-            columns=("OpponentId", "Name", "Kind", "Strength", "Experience", "CreatedAt", "UpdatedAt"),
+            columns=("OpponentId", "Name", "Kind", "Strength",
+                     "Experience", "CreatedAt", "UpdatedAt"),
             values=[(get_uuid(), opponent_master.name, opponent_master.kind, opponent_master.strength,
                      opponent_master.experience, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)])
     return JSONResponse(status_code=201, content=jsonable_encoder(opponent_master))

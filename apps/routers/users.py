@@ -28,16 +28,16 @@ class UserResponse(BaseModel):
 
 
 @router.get("/", tags=["users"])
-def read_random_user(db: Database = Depends(get_db)) -> JSONResponse:
+def read_random_users(db: Database = Depends(get_db)) -> JSONResponse:
     """
-    Get a random user for tests
+    Get 100,000 random users for tests initial requests
     """
     with db.snapshot() as snapshot:
         query = f"SELECT UserId, Name, Mail From {TABLE} TABLESAMPLE RESERVOIR (100000 ROWS)"
         results = list(snapshot.execute_sql(query))
     if not results:
         raise HTTPException(status_code=503, detail="Any users does not found")
-    return JSONResponse(content=jsonable_encoder(UserResponse(user_id=results[0][0], name=results[0][1], mail=results[0][2])))
+    return JSONResponse(content=jsonable_encoder([UserResponse(**dict(zip(UserResponse.__fields__.keys(), result))).dict() for result in results]))
 
 
 @router.get("/{user_id}", tags=["users"])
@@ -47,7 +47,7 @@ def read_user(user_id: str, db: Database = Depends(get_db)) -> JSONResponse:
     """
     with db.snapshot() as snapshot:
         query = f"SELECT UserId, Name, Mail From {TABLE} WHERE UserId={user_id}"
-        results = list(snapshot.execute_sql(query))
+        results = list(snapshot.execute_sql(query, request_options={"request_tag": "app=sample-game,action=select,service=read_user,target=users"}))
     if not results:
         raise HTTPException(status_code=404, detail="The character did not found")
     return JSONResponse(content=jsonable_encoder(UserResponse(user_id=results[0][0], name=results[0][1], mail=results[0][2])))
@@ -63,7 +63,7 @@ def create_user(user: User, db: Database = Depends(get_db)) -> JSONResponse:
         batch.insert(
             table=TABLE,
             columns=("UserId", "Name", "Mail", "Password", "CreatedAt", "UpdatedAt"),
-            values=[(get_uuid(), user.name, user.mail, hashed_password, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)],
+            values=[(get_uuid(), user.name, user.mail, hashed_password, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)]
         )
     return JSONResponse(status_code=201, content=jsonable_encoder(user))
 

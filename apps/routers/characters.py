@@ -58,7 +58,7 @@ def read_character(user_id: int, db: Database = Depends(get_db)) -> JSONResponse
         query = f"""SELECT Id, Users.Name,CharacterMasters.Name, Kind, {TABLE}.Name, Level, Experience, Strength FROM {TABLE}
                   INNER JOIN Users ON Characters.UserId=Users.UserId
                   INNER JOIN CharacterMasters ON Characters.CharacterId=CharacterMasters.CharacterId WHERE {TABLE}.UserId={user_id}"""
-        results = list(snapshot.execute_sql(query))
+        results = list(snapshot.execute_sql(query, request_options={"request_tag": "app=sample-game,action=select,service=read_character,target=characters"}))
     if not results:
         raise HTTPException(status_code=404, detail="This user does not have any characters")
     return JSONResponse(content=jsonable_encoder([CharacterResponse(**dict(zip(CharacterResponse.__fields__.keys(), result))).dict() for result in results]))
@@ -76,6 +76,5 @@ def create_characters(characters: Character, db: Database = Depends(get_db)) -> 
         return JSONResponse(content=jsonable_encoder({}))
     with db.batch() as batch:
         batch.insert(table=TABLE, columns=("Id", "UserId", "CharacterId", "Name", "Level", "Experience", "Strength", "CreatedAt", "UpdatedAt"),
-                     values=[(get_uuid(), characters.user_id, characters.character_id, characters.name, characters.level,
-                              characters.experience, characters.experience, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)])
+                     values=[(get_uuid(), characters.user_id, characters.character_id, characters.name, characters.level, characters.experience, characters.experience, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)])
     return JSONResponse(status_code=201, content=jsonable_encoder(characters))

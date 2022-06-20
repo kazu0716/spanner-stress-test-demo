@@ -4,6 +4,7 @@ from random import randint
 from time import time
 from typing import Dict
 
+import requests
 from faker import Faker
 from google.cloud.logging import Client
 from pydantic import BaseModel, EmailStr, Field
@@ -23,7 +24,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.getLevelName(LOG_LEVEL))
 
 fake = Faker('jp-JP')
-
 
 class User(BaseModel):
     name: str
@@ -49,11 +49,19 @@ class UpdateCharacters(BaseModel):
     level: int
     experience: int
 
-
 class StressScenario(HttpUser):
+    def __init__(self, parent):
+        super().__init__(parent)
+        # NOTE: get users before tests
+        logger.debug("load users info")
+        self.users = self.client.get(url=f"/api/v1/users/", headers={"Content-Type": "application/json", "User-Agent": fake.chrome()}).json()
+        logger.debug("end users info")
+
     def on_start(self):
         self.version = "v1"
         self.headers: Dict[str, str] = {"Content-Type": "application/json", "User-Agent": fake.chrome()}
+        if not self.users:
+            self.users = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
 
     @ task(1)
     def create_fake_user(self):
@@ -68,7 +76,7 @@ class StressScenario(HttpUser):
     def create_character(self):
         """a random user to get a random character"""
         logger.debug("start create_character")
-        user = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
+        user = dict(self.users[randint(0, len(self.users))])
         logger.debug(f"user: {user}")
         character = self.client.get(url=f"/api/{self.version}/character_master/", headers=self.headers).json()
         logger.debug(f"character master: {character}")
@@ -88,7 +96,7 @@ class StressScenario(HttpUser):
     def battle_opponent(self):
         """a random user to battle a random opponent"""
         logger.debug("start battle_opponent")
-        user = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
+        user = dict(self.users[randint(0, len(self.users))])
         logger.debug(f"user: {user}")
         characters = list(self.client.get(url=f"/api/{self.version}/characters/{user['user_id']}", headers=self.headers).json())
         if "detail" in characters:
@@ -116,7 +124,7 @@ class StressScenario(HttpUser):
     def get_histories(self):
         """get a battle history between random range"""
         logger.debug("start get_histories")
-        user = self.client.get(url=f"/api/{self.version}/users/", headers=self.headers).json()
+        user = dict(self.users[randint(0, len(self.users))])
         until = int(time())
         since = until - randint(600, 3600)
         logger.debug(f"user: {user['user_id']}, since: {since}, until: {until}")

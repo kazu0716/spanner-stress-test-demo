@@ -58,9 +58,9 @@ def battles(battles: Battles, db: Database = Depends(get_db)) -> JSONResponse:
     """
     with db.snapshot(multi_use=True) as snapshot:
         characters_query = f"SELECT Id, UserId, Level, Experience, Strength FROM {Characters} WHERE Id={battles.character_id}"
-        characters = list(snapshot.execute_sql(characters_query))
+        characters = list(snapshot.execute_sql(characters_query, request_options={"request_tag": "app=sample-game,action=select,service=battles,target=characters"}))
         opponents_query = f"SELECT OpponentId, Kind, Strength, Experience FROM {OpponentMasters} TABLESAMPLE RESERVOIR (1 ROWS)"
-        opponents = list(snapshot.execute_sql(opponents_query))
+        opponents = list(snapshot.execute_sql(opponents_query, request_options={"request_tag": "app=sample-game,action=select,service=battles,target=opponents"}))
     if not opponents:
         raise HTTPException(
             status_code=503, detail="Any opponent masters does not found")
@@ -71,20 +71,17 @@ def battles(battles: Battles, db: Database = Depends(get_db)) -> JSONResponse:
     character = Character(
         **dict(zip(Character.__fields__.keys(), characters[0])))
     # NOTE: battle simple logic
-    result: bool = random() <= (character.strength + randint(1,
-                                                             character.strength * randint(1, 10)) / opponent.strength)
+    result: bool = random() <= (character.strength + randint(1, character.strength * randint(1, 10)) / opponent.strength)
     with db.batch() as batch:
         if result:
             batch.update(
                 table=Characters,
                 columns=("Id", "UserId", "Level", "Experience", "Strength"),
                 # NOTE: simple logic to make a character strong
-                values=[(character.id, character.user_id, character.level + int(random() / 0.95), character.experience + opponent.experience,
-                         character.strength + randint(0, opponent.experience // 100))],
+                values=[(character.id, character.user_id, character.level + int(random() / 0.95), character.experience + opponent.experience, character.strength + randint(0, opponent.experience // 100))],
             )
         entry_shard_id = get_entry_shard_id(character.user_id)
-        batch.insert(table=BattleHistory, columns=("BattleHistoryId", "UserId", "Id", "OpponentId", "Result", "EntryShardId", "CreatedAt", "UpdatedAt"),
-                     values=[(get_uuid(), character.user_id, character.id, opponent.opponent_id, result, entry_shard_id, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)])
+        batch.insert(table=BattleHistory, columns=("BattleHistoryId", "UserId", "Id", "OpponentId", "Result", "EntryShardId", "CreatedAt", "UpdatedAt"), values=[(get_uuid(), character.user_id, character.id, opponent.opponent_id, result, entry_shard_id, spanner.COMMIT_TIMESTAMP, spanner.COMMIT_TIMESTAMP)])
     return JSONResponse(content=jsonable_encoder({"result": result}))
 
 
@@ -103,8 +100,7 @@ def battle_history(user_id: int, since: int, until: int, db: Database = Depends(
             since), "Until": epoch_to_datetime(until)}
         params_type = {"Since": spanner.param_types.TIMESTAMP,
                        "Until": spanner.param_types.TIMESTAMP}
-        histories = snapshot.execute_sql(
-            query, params=params, param_types=params_type)
+        histories = snapshot.execute_sql(query, params=params, param_types=params_type, request_options={"request_tag": "app=sample-game,action=select,service=battlehistories,target=battlehistory"})
     res = []
     for history in histories:
         result = dict(zip(BattleHistoryResponse.__fields__.keys(), history))
