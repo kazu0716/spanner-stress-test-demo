@@ -33,7 +33,7 @@ def read_random_user(db: Database = Depends(get_db)) -> JSONResponse:
     Get a random user for tests
     """
     with db.snapshot() as snapshot:
-        query = f"SELECT UserId, Name, Mail From {TABLE} TABLESAMPLE RESERVOIR (1 ROWS)"
+        query = f"SELECT UserId, Name, Mail From {TABLE} TABLESAMPLE RESERVOIR (100000 ROWS)"
         results = list(snapshot.execute_sql(query))
     if not results:
         raise HTTPException(status_code=503, detail="Any users does not found")

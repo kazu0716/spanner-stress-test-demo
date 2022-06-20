@@ -8,6 +8,7 @@ from google.cloud.spanner_v1.database import Database
 from passlib.context import CryptContext
 
 context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+num_shards = 100
 
 # NOTE: Spanner Settings
 PROJECT: str = getenv("GOOGLE_CLOUD_PROJECT", "stress-test-demo")
@@ -37,7 +38,7 @@ def get_uuid() -> int:
 
 
 def get_entry_shard_id(user_id: int) -> int:
-    num_shards = 100
+    
     now: int = time_ns() // 1000
     return (user_id + now + get_uuid()) % num_shards
 

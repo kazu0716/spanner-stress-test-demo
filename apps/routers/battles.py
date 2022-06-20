@@ -8,13 +8,14 @@ from google.cloud import spanner
 from google.cloud.spanner_v1.database import Database
 from pydantic import BaseModel
 
-from .utils import epoch_to_datetime, get_db, get_entry_shard_id, get_uuid
+from .utils import epoch_to_datetime, get_db, get_entry_shard_id, get_uuid, num_shards
 
 OpponentMasters: str = "OpponentMasters"
 Characters: str = "Characters"
 # NOTE: force to use index in select
 BattleHistory: str = "BattleHistory"
-BattleHistoryByUserId: str = "@{FORCE_INDEX=BattleHistoryByUserId}"
+# TODO: After DDL changed, following modify from  BattleHistoryByUserId2 to BattleHistoryByUserId
+BattleHistoryByUserId: str = "@{FORCE_INDEX=BattleHistoryByUserId2}"
 
 router = APIRouter(
     prefix="/battles",
@@ -61,18 +62,22 @@ def battles(battles: Battles, db: Database = Depends(get_db)) -> JSONResponse:
         opponents_query = f"SELECT OpponentId, Kind, Strength, Experience FROM {OpponentMasters} TABLESAMPLE RESERVOIR (1 ROWS)"
         opponents = list(snapshot.execute_sql(opponents_query))
     if not opponents:
-        raise HTTPException(status_code=503, detail="Any opponent masters does not found")
+        raise HTTPException(
+            status_code=503, detail="Any opponent masters does not found")
     if not characters:
-        raise HTTPException(status_code=404, detail="The character did not found")
+        raise HTTPException(
+            status_code=404, detail="The character did not found")
     opponent = Opponent(**dict(zip(Opponent.__fields__.keys(), opponents[0])))
-    character = Character(**dict(zip(Character.__fields__.keys(), characters[0])))
+    character = Character(
+        **dict(zip(Character.__fields__.keys(), characters[0])))
     # NOTE: battle simple logic
-    result: bool = random() <= (character.strength + randint(1, character.strength * randint(1, 10)) / opponent.strength)
+    result: bool = random() <= (character.strength + randint(1,
+                                                             character.strength * randint(1, 10)) / opponent.strength)
     with db.batch() as batch:
         if result:
             batch.update(
                 table=Characters,
-                columns=("Id", "UserId" , "Level", "Experience", "Strength"),
+                columns=("Id", "UserId", "Level", "Experience", "Strength"),
                 # NOTE: simple logic to make a character strong
                 values=[(character.id, character.user_id, character.level + int(random() / 0.95), character.experience + opponent.experience,
                          character.strength + randint(0, opponent.experience // 100))],
@@ -92,11 +97,14 @@ def battle_history(user_id: int, since: int, until: int, db: Database = Depends(
     """
     with db.snapshot(exact_staleness=timedelta(seconds=15)) as snapshot:
         query = f"""SELECT UserId, Id, OpponentId,  Result, CreatedAt, UpdatedAt FROM {BattleHistory+BattleHistoryByUserId}
-                  WHERE UserId={user_id} AND UpdatedAt>=@Since  AND UpdatedAt<=@Until
+                  WHERE UserId={user_id} AND UpdatedAt BETWEEN @Since AND @Until AND EntryShardId BETWEEN 0 AND {num_shards-1}
                   ORDER BY UpdatedAt DESC LIMIT 300"""
-        params = {"Since": epoch_to_datetime(since), "Until": epoch_to_datetime(until)}
-        params_type = {"Since": spanner.param_types.TIMESTAMP, "Until": spanner.param_types.TIMESTAMP}
-        histories = snapshot.execute_sql(query, params=params, param_types=params_type)
+        params = {"Since": epoch_to_datetime(
+            since), "Until": epoch_to_datetime(until)}
+        params_type = {"Since": spanner.param_types.TIMESTAMP,
+                       "Until": spanner.param_types.TIMESTAMP}
+        histories = snapshot.execute_sql(
+            query, params=params, param_types=params_type)
     res = []
     for history in histories:
         result = dict(zip(BattleHistoryResponse.__fields__.keys(), history))
@@ -109,5 +117,6 @@ def battle_history(user_id: int, since: int, until: int, db: Database = Depends(
 
 @router.delete("/history", tags=["battles"])
 def delete_all_battle_histories(db: Database = Depends(get_db)) -> JSONResponse:
-    db.execute_partitioned_dml(f"DELETE FROM {BattleHistory} WHERE BattleHistoryId > 0")
+    db.execute_partitioned_dml(
+        f"DELETE FROM {BattleHistory} WHERE BattleHistoryId > 0")
     return JSONResponse(content=jsonable_encoder({}))

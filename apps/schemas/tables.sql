@@ -57,6 +57,9 @@ CREATE TABLE BattleHistory (
     Id,
     OpponentId,
     BattleHistoryId
-);
+),
+INTERLEAVE IN PARENT Users ON DELETE CASCADE;
 
+-- TODO: delete BattleHistoryByUserId
 CREATE INDEX BattleHistoryByUserId ON BattleHistory(EntryShardId, UserId, UpdatedAt);
+CREATE INDEX BattleHistoryByUserId2 ON BattleHistory(EntryShardId, UserId, UpdatedAt DESC);
