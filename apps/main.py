@@ -3,6 +3,8 @@ import os
 from os import getenv
 from sys import stdout
 
+import googleclouddebugger
+import googlecloudprofiler
 from fastapi import FastAPI
 from gunicorn.app.base import BaseApplication
 from gunicorn.glogging import Logger
@@ -16,6 +18,7 @@ from routers.users import router as user_router
 
 # NOTE: settings from env values
 ENV = getenv("ENV", "local")
+PROJECT = getenv("GOOGLE_CLOUD_PROJECT", "local")
 LOG_LEVEL = logging.getLevelName(os.environ.get("LOG_LEVEL", "DEBUG"))
 JSON_LOGS = True if os.environ.get("JSON_LOGS", "0") == "1" else False
 WORKERS = int(os.environ.get("GUNICORN_WORKERS", "4"))
@@ -28,6 +31,26 @@ app.include_router(characters_router, prefix=prefix_v1)
 app.include_router(character_master_router, prefix=prefix_v1)
 app.include_router(opponent_master_router, prefix=prefix_v1)
 app.include_router(battle_router, prefix=prefix_v1)
+
+
+def setup_tools():
+    try:
+        googleclouddebugger.enable(breakpoint_enable_canary=True)
+        if LOG_LEVEL == "WARNING":
+            verbose = 1
+        elif LOG_LEVEL == "INFO":
+            verbose = 2
+        elif LOG_LEVEL == "DEBUG":
+            verbose = 3
+        else:
+            verbose = 0
+        googlecloudprofiler.start(
+            service='sample-game-apps',
+            service_version='0.1',
+            verbose=verbose,
+            project_id=PROJECT)
+    except (ValueError, NotImplementedError) as exc:
+        logger.error(f"Could not setup gcloud agents. in detailds: {exc}")
 
 
 class InterceptHandler(logging.Handler):
@@ -44,7 +67,8 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
 
-        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        logger.opt(depth=depth, exception=record.exc_info).log(
+            level, record.getMessage())
 
 
 class StubbedGunicornLogger(Logger):
@@ -79,6 +103,11 @@ class StandaloneApplication(BaseApplication):
 
 
 if __name__ == '__main__':
+    # NOTE: setup gcloud ops tools
+    # if ENV == "production":
+    #     setup_tools()
+    setup_tools()
+
     # NOTE: gunicorn and uvicorn settings
     # ref: https://pawamoy.github.io/posts/unify-logging-for-a-gunicorn-uvicorn-app/
     intercept_handler = InterceptHandler()
