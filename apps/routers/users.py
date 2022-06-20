@@ -30,10 +30,10 @@ class UserResponse(BaseModel):
 @router.get("/", tags=["users"])
 def read_random_users(db: Database = Depends(get_db)) -> JSONResponse:
     """
-    Get 100,000 random users for tests initial requests
+    Get 1,000 random users for tests initial requests
     """
     with db.snapshot() as snapshot:
-        query = f"SELECT UserId, Name, Mail From {TABLE} TABLESAMPLE RESERVOIR (100000 ROWS)"
+        query = f"SELECT UserId, Name, Mail From {TABLE} TABLESAMPLE RESERVOIR (1000 ROWS)"
         results = list(snapshot.execute_sql(query))
     if not results:
         raise HTTPException(status_code=503, detail="Any users does not found")
