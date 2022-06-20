@@ -31,4 +31,7 @@ $ gcloud container clusters create $CLUSTER_NAME --cluster-version=1.22 --tags=$
 $ kubectl config get-contexts
 # delete clusters
 $ gcloud container clusters delete $CLUSTER_NAME --zone asia-northeast1-a
+
+# resize cluster
+$ gcloud container clusters resize $CLUSTER_NAME --node-pool default-pool --num-nodes x --zone asia-northeast1-a
 ```

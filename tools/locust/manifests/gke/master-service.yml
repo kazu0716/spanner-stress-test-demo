@@ -4,8 +4,6 @@ metadata:
   name: locust-master
   labels:
     app: locust-master
-  annotations:
-    cloud.google.com/neg: '{"ingress": true}'
 spec:
   type: ClusterIP
   ports:
