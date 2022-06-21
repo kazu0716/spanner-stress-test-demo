@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - env:
-        image: gcr.io/kazu0716-sandbox/locust:aee1c27
+        image: gcr.io/kazu0716-sandbox/locust:e12b944
         command: ["/usr/local/bin/locust"]
         args: ["-f", "/user/src/app/locustfile.py", "--worker", "--master-host", "locust-master"]
         imagePullPolicy: IfNotPresent
