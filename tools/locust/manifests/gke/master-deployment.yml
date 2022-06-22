@@ -31,3 +31,5 @@ spec:
             - name: loc-master-p2
               containerPort: 5558
               protocol: TCP
+      nodeSelector:
+        cloud.google.com/gke-nodepool: master-pool

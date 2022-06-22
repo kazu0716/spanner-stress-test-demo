@@ -33,5 +33,11 @@ $ kubectl config get-contexts
 $ gcloud container clusters delete $CLUSTER_NAME --zone asia-northeast1-a
 
 # resize cluster
-$ gcloud container clusters resize $CLUSTER_NAME --node-pool default-pool --num-nodes x --zone asia-northeast1-a
+$ gcloud container clusters resize $CLUSTER_NAME --node-pool default-pool --num-nodes x 
+
+# scale deployment
+$ kubectl scale deployment locust-worker --replicas=120
+
+# add node pool
+$ gcloud container node-pools create master-pool --cluster $CLUSTER_NAME --machine-type e2-highmem-2 --num-nodes 1 --zone asia-northeast1-a
 ```
